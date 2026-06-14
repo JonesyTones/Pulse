@@ -162,6 +162,7 @@ const ChatPanel = () => {
               bottom: 0,
               right: 440,
               width: 'min(520px, calc(100vw - 440px - 16px))',
+              zIndex: 75,
               background: 'var(--pulse-surface)',
               border: '1px solid var(--pulse-border)',
               borderBottom: 'none',
