@@ -1,0 +1,117 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  background: var(--pulse-bg);
+  color: var(--pulse-text-primary);
+  font-family: 'Space Mono', monospace;
+  overflow: hidden;
+}
+
+/* Scanline texture overlay for ops-center CRT aesthetic */
+.scanline-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 2px,
+    rgba(26, 31, 46, 0.15) 2px, rgba(26, 31, 46, 0.15) 4px
+  );
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Radial gradient ambient glows on map background */
+.map-ambient {
+  background:
+    radial-gradient(circle at 25% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 75% 65%, rgba(239, 68, 68, 0.05) 0%, transparent 40%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Data pin multi-layer glow (use --pin-color CSS var on the element) */
+.data-pin {
+  box-shadow:
+    0 0 12px 4px var(--pin-color),
+    0 0 24px 8px color-mix(in srgb, var(--pin-color) 60%, transparent),
+    0 0 36px 12px color-mix(in srgb, var(--pin-color) 30%, transparent);
+}
+
+/* Outer pulsing halo — apply Tailwind animate-pulse alongside this class */
+.data-pin-ring {
+  box-shadow: 0 0 20px 8px color-mix(in srgb, var(--pin-color) 80%, transparent);
+}
+
+/* Flag pin — speech bubble shape with bottom-left arrow pointer (Phase 4) */
+/* --pin-color must be set as inline CSS variable on the element */
+.flag-pin {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow:
+    0 0 12px 4px color-mix(in srgb, var(--pin-color) 50%, transparent),
+    0 0 24px 8px color-mix(in srgb, var(--pin-color) 25%, transparent);
+  filter: drop-shadow(0 0 6px var(--pin-color));
+  cursor: pointer;
+  user-select: none;
+  will-change: transform, height;
+}
+
+/* Bottom-left arrow — CSS triangle pointing downward */
+.flag-pin::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 10px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid color-mix(in srgb, var(--pin-color) 90%, #000);
+  pointer-events: none;
+}
+
+/* Left icon strip */
+.flag-pin-strip {
+  width: 28px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--pin-color) 70%, #000);
+  align-self: stretch;
+}
+
+/* Scrollbar hidden — used by panels */
+.scrollbar-hidden::-webkit-scrollbar { display: none; }
+.scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+/* Live status dot — apply Tailwind animate-pulse alongside this class */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pulse-success);
+  box-shadow: 0 0 8px var(--pulse-success);
+}
+
+/* Mandatory: respect user motion preference (WCAG 2.1 AA) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

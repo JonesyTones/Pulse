@@ -1,0 +1,18 @@
+:root {
+  --pulse-bg:              #0A0C10;
+  --pulse-surface:         #111318;
+  --pulse-surface-raised:  #1A1F2E;
+  --pulse-border:          #252B3B;
+  --pulse-text-primary:    #F0F4FF;
+  --pulse-text-secondary:  #6B7A99;
+  --pulse-text-dim:        #8B9AAF;
+  --pulse-accent-blue:     #3B82F6;
+  --pulse-arc-red:         #EF4444;
+  --pulse-arc-orange:      #F97316;
+  --pulse-arc-amber:       #F59E0B;
+  --pulse-arc-cyan:        #06B6D4;   /* X / Twitter */
+  --pulse-arc-pink:        #EC4899;   /* TikTok */
+  --pulse-arc-purple:      #A855F7;   /* Instagram */
+  --pulse-success:         #10B981;
+  --pulse-warning:         #FBBF24;
+}
