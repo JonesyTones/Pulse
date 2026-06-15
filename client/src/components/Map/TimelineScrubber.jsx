@@ -48,6 +48,7 @@ const TimelineScrubber = () => {
   const scrubberRange    = useAppStore((s) => s.scrubberRange)
   const setScrubberProgress = useAppStore((s) => s.setScrubberProgress)
   const setScrubberRange    = useAppStore((s) => s.setScrubberRange)
+  const setTimeRange        = useAppStore((s) => s.setTimeRange)
 
   // Local state only
   const [isPlaying, setIsPlaying]   = useState(false)
@@ -177,7 +178,7 @@ const TimelineScrubber = () => {
                 return (
                   <button
                     key={pill}
-                    onClick={() => setScrubberRange(key)}
+                    onClick={() => { setScrubberRange(key); setTimeRange(key) }}
                     style={{
                       fontFamily: "'Space Mono', monospace",
                       fontSize: 10,

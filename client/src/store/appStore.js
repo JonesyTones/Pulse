@@ -58,7 +58,7 @@ const useAppStore = create((set) => ({
 
   // Map interaction
   selectedPin: null,
-  openPanel: null,              // 'dataSources' | 'timeRange' | 'mapStyle' | 'compass' | null
+  openPanel: null,              // 'dataSources' | 'mapStyle' | 'compass' | null
 
   // Setters — Data
   setTrendData: (data) => set({ trendData: data }),

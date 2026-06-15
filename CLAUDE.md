@@ -130,7 +130,6 @@ PULSE targets tablet through ultrawide displays. Phones are explicitly out of sc
 - Search Control: 600px on lg+, full-width minus 32px on sm/md
 - Timeline Scrubber: 600px on lg+, full-width minus 32px on sm/md
 - Data Sources Panel: 320px fixed
-- Time Range Panel: 220px fixed
 - Map Style Panel: 280px fixed
 - Compass Panel: 200px fixed
 
@@ -158,7 +157,6 @@ pulse/
 │   │   │   ├── Controls/
 │   │   │   │   ├── FloatingControls.jsx    # Left side vertical icon menu wrapper
 │   │   │   │   ├── DataSourcesPanel.jsx    # 7 sources, toggles, MOCK badges, density
-│   │   │   │   ├── TimeRangePanel.jsx      # 1H / 24H / 7D
 │   │   │   │   ├── MapStylePanel.jsx       # DARK / SATELLITE / TERRAIN / NATURAL / STREET
 │   │   │   │   ├── NavigationControls.jsx  # Zoom, 3D, location, compass
 │   │   │   │   └── CompassPanel.jsx        # Heading + tilt sliders
@@ -1049,6 +1047,9 @@ Never use origin: '*' in production.
 - MapCard.jsx is retired — flag pin hover state replaces it entirely.
 - TimelineScrubber: scrubberProgress + scrubberRange in Zustand only.
   isPlaying, isDragging, isExpanded are local state only.
+- Time range is controlled exclusively by the TimelineScrubber range pills.
+  TimeRangePanel is retired — do not recreate it.
+  Pill click updates both scrubberRange AND timeRange in Zustand.
 - Pre-generate 288 mock snapshots on app load (1 per 5 min, 24h window).
 - PinDetailView is absolute overlay inside AIPanel — same container.
 - SavedArticles is a collapsible section inside AIPanel — not a panel.

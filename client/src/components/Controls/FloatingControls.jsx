@@ -1,21 +1,18 @@
 import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Database, Clock, Map } from 'lucide-react'
+import { Database, Map } from 'lucide-react'
 import useAppStore from '../../store/appStore.js'
 import useClickOutside from '../../hooks/useClickOutside.js'
 import DataSourcesPanel from './DataSourcesPanel.jsx'
-import TimeRangePanel from './TimeRangePanel.jsx'
 import MapStylePanel from './MapStylePanel.jsx'
 
 const CONTROLS = [
   { id: 'dataSources', icon: Database, label: 'DATA SOURCES', delay: 0.20 },
-  { id: 'timeRange',   icon: Clock,    label: 'TIME RANGE',   delay: 0.30 },
-  { id: 'mapStyle',    icon: Map,      label: 'MAP STYLE',    delay: 0.40 },
+  { id: 'mapStyle',    icon: Map,      label: 'MAP STYLE',    delay: 0.30 },
 ]
 
 const PANEL_MAP = {
   dataSources: DataSourcesPanel,
-  timeRange:   TimeRangePanel,
   mapStyle:    MapStylePanel,
 }
 
