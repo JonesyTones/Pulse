@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import useAppStore from '../../store/appStore.js'
 import useLiveData from '../../hooks/useLiveData.js'
+import { scoreRelevance } from '../../utils/relevanceEngine.js'
 import generateSnapshots from '../../utils/generateSnapshots.js'
 import WorldMap from './WorldMap.jsx'
 import DataPin from './DataPin.jsx'
@@ -63,6 +64,7 @@ const MapContainer = () => {
   const scrubberProgress   = useAppStore((s) => s.scrubberProgress)
   const trendSnapshots     = useAppStore((s) => s.trendSnapshots)
   const trendData          = useAppStore((s) => s.trendData)
+  const arcData            = useAppStore((s) => s.arcData)
   const setTrendSnapshots  = useAppStore((s) => s.setTrendSnapshots)
 
   // Start live data polling
@@ -87,25 +89,25 @@ const MapContainer = () => {
     return trendSnapshots[clamped]?.data ?? trendData
   })()
 
-  // Filter by activeSources
-  let filteredData = displayData.filter((d) => activeSources.includes(d.source))
+  // Filter by activeSources, then apply density
+  let filteredData = applyDensity(
+    displayData.filter((d) => activeSources.includes(d.source)),
+    dataDensity,
+  )
 
-  // Filter by activeTags (match topic or region)
-  const activeTagLabels = activeTags
-    .filter((t) => t.active !== false)
-    .map((t) => t.label.toLowerCase())
-  if (activeTagLabels.length > 0) {
-    filteredData = filteredData.filter((d) =>
-      activeTagLabels.some(
-        (tag) =>
-          d.topic.toLowerCase().includes(tag) ||
-          d.region.toLowerCase().includes(tag),
-      ),
-    )
-  }
+  // Relevance scoring — dims unrelated pins to 0.2 opacity instead of removing
+  // them from the DOM. Active topic tags become the keyword query; active region
+  // tags drive the region-match score.
+  const activeActiveTags = activeTags.filter((t) => t.active !== false)
+  const relevanceQuery = activeActiveTags
+    .filter((t) => t.type === 'topic')
+    .map((t) => t.label)
+    .join(' ')
+  const activeRegionTags = activeActiveTags
+    .filter((t) => t.type === 'region')
+    .map((t) => t.label)
 
-  // Apply density
-  filteredData = applyDensity(filteredData, dataDensity)
+  filteredData = scoreRelevance(filteredData, { query: relevanceQuery, activeRegionTags })
 
   // Extract keywords from AI answer and match against pin topics/regions
   const queryRelatedIds = aiResponse
@@ -119,7 +121,7 @@ const MapContainer = () => {
         if (!words.length) return null
         return new Set(
           filteredData
-            .filter((d) => words.some((w) => d.topic.toLowerCase().includes(w) || d.region.toLowerCase().includes(w)))
+            .filter((d) => words.some((w) => d.topic?.toLowerCase().includes(w) || d.region?.toLowerCase().includes(w)))
             .map((d) => d.id),
         )
       })()
@@ -250,7 +252,7 @@ const MapContainer = () => {
       {/* Arc lines */}
       {map && (
         <ArcLayer
-          trendData={filteredData}
+          arcData={arcData}
           activeSources={activeSources}
           dataSourceArcs={dataSourceArcs}
           activeQuery={!!aiResponse}
@@ -258,18 +260,35 @@ const MapContainer = () => {
       )}
 
       {/* Flag pins */}
-      {map && filteredData.map((item, i) => (
-        <DataPin
-          key={item.id}
-          data={item}
-          index={i}
-          isActive={
-            queryRelatedIds === null
-              ? undefined
-              : queryRelatedIds.has(item.id)
-          }
-        />
-      ))}
+      {map && filteredData.map((item, i) => {
+        // Merge two independent dimming signals:
+        // 1. relevanceEngine: item.dimmed=true when it scores below threshold for active tags/query
+        // 2. AI response keywords: queryRelatedIds tracks pins matching the current AI answer
+        // Pin is active (full opacity) if either signal says it's relevant.
+        // If neither filter is active both are null/false → isActive stays undefined (full opacity).
+        const relevanceDimmed = item.dimmed === true
+        const aiActive = queryRelatedIds !== null ? queryRelatedIds.has(item.id) : null
+
+        let isActive
+        if (aiActive !== null && relevanceDimmed) {
+          isActive = aiActive // AI signal takes precedence when both are active
+        } else if (aiActive !== null) {
+          isActive = aiActive
+        } else if (relevanceDimmed) {
+          isActive = false
+        } else {
+          isActive = undefined
+        }
+
+        return (
+          <DataPin
+            key={item.id}
+            data={item}
+            index={i}
+            isActive={isActive}
+          />
+        )
+      })}
     </>
   )
 }

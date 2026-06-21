@@ -3,103 +3,73 @@ import * as d3 from 'd3'
 import logger from '../../utils/logger.js'
 import { useMapContext } from '../../context/MapContext.jsx'
 
-const SOURCE_COLORS = {
-  google:    '#3B82F6',
-  youtube:   '#EF4444',
-  reddit:    '#F97316',
-  gdelt:     '#F59E0B',
-  twitter:   '#06B6D4',
-  tiktok:    '#EC4899',
-  instagram: '#A855F7',
-}
-
-// Pick up to 2 highest-volume items per source to form arc pairs
-const buildArcPairs = (trendData, activeSources, dataSourceArcs) => {
-  const pairs = []
-
-  activeSources.forEach((source) => {
-    if (!dataSourceArcs[source]) return
-
-    const items = trendData
-      .filter((d) => d.source === source)
-      .sort((a, b) => b.volume - a.volume)
-      .slice(0, 2)
-
-    if (items.length === 2) {
-      pairs.push({ from: items[0], to: items[1], source })
-    }
-  })
-
-  return pairs
-}
-
-// Great-circle arc: interpolate N points between two lat/lng coords
+// Great-circle arc: interpolate N points between two lng/lat coords
 const greatCirclePoints = (from, to, numPoints = 50) => {
-  const interpolate = d3.geoInterpolate(
-    [from.lng, from.lat],
-    [to.lng, to.lat],
-  )
+  const interpolate = d3.geoInterpolate(from, to)
   return Array.from({ length: numPoints }, (_, i) => interpolate(i / (numPoints - 1)))
 }
 
-const ARC_LAYER_ID = 'pulse-arc-layer'
+const ARC_LAYER_ID  = 'pulse-arc-layer'
 const ARC_SOURCE_ID = 'pulse-arc-source'
 
-const ArcLayer = ({ trendData, activeSources, dataSourceArcs, activeQuery }) => {
-  const mapInstance = useMapContext()
+const ArcLayer = ({ arcData, activeSources, dataSourceArcs, activeQuery }) => {
+  const mapInstance  = useMapContext()
   const animFrameRef = useRef(null)
-  // progress per arc pair (0→1 for draw animation)
   const arcProgressRef = useRef({})
 
   useEffect(() => {
-    if (!mapInstance || !trendData?.length) return
+    if (!mapInstance) return
 
-    const pairs = buildArcPairs(trendData, activeSources, dataSourceArcs)
+    // Filter to sources that are active AND have arcs toggled on.
+    // Skip zero-distance arcs (same coords — both ends on the same map point).
+    const visibleArcs = (arcData ?? []).filter(arc => {
+      if (!activeSources.includes(arc.source)) return false
+      if (!dataSourceArcs[arc.source]) return false
+      const [fx, fy] = arc.fromCoords
+      const [tx, ty] = arc.toCoords
+      if (fx === tx && fy === ty) return false // zero-distance: skip
+      return true
+    })
 
-    // Remove previous layer + source if they exist
+    // Clean up previous layer + source
     try {
       if (mapInstance.getLayer(ARC_LAYER_ID)) mapInstance.removeLayer(ARC_LAYER_ID)
       if (mapInstance.getSource(ARC_SOURCE_ID)) mapInstance.removeSource(ARC_SOURCE_ID)
     } catch (_) { /* ignore if already removed */ }
 
-    if (!pairs.length) return
+    if (!visibleArcs.length) return
 
-    // Init progress counters — stagger draw animation per arc pair
-    pairs.forEach((pair, i) => {
-      const key = `${pair.source}-${i}`
-      arcProgressRef.current[key] = 0
+    // Init per-arc progress counters for staggered draw animation
+    arcProgressRef.current = {}
+    visibleArcs.forEach((arc, i) => {
+      arcProgressRef.current[i] = 0
     })
 
     const startTime = performance.now()
-    const ARC_DRAW_DURATION = 1500   // ms per arc
-    const ARC_STAGGER = 300          // ms between arc starts
+    const ARC_DRAW_DURATION = 1500 // ms per arc
+    const ARC_STAGGER       = 300  // ms between arc starts
 
-    // Build GeoJSON for arcs at current progress
     const buildGeoJSON = (progresses) => ({
       type: 'FeatureCollection',
-      features: pairs.flatMap((pair, i) => {
-        const key = `${pair.source}-${i}`
-        const progress = progresses[key] ?? 0
+      features: visibleArcs.flatMap((arc, i) => {
+        const progress = progresses[i] ?? 0
         if (progress <= 0) return []
 
-        const allPoints = greatCirclePoints(pair.from, pair.to)
+        const allPoints = greatCirclePoints(arc.fromCoords, arc.toCoords)
         const visibleCount = Math.max(2, Math.round(allPoints.length * progress))
-        const visiblePoints = allPoints.slice(0, visibleCount)
 
         return [{
           type: 'Feature',
           properties: {
-            source: pair.source,
-            color: SOURCE_COLORS[pair.source] || '#3B82F6',
-            // Dim unrelated arcs when a query is active
+            color: arc.color,
+            // Dim all arcs when an AI query is active — same behaviour as before
             opacity: activeQuery ? 0.2 : 0.8,
           },
-          geometry: { type: 'LineString', coordinates: visiblePoints },
+          geometry: { type: 'LineString', coordinates: allPoints.slice(0, visibleCount) },
         }]
       }),
     })
 
-    // Add source + layer
     mapInstance.addSource(ARC_SOURCE_ID, {
       type: 'geojson',
       data: buildGeoJSON(arcProgressRef.current),
@@ -110,31 +80,28 @@ const ArcLayer = ({ trendData, activeSources, dataSourceArcs, activeQuery }) => 
       type: 'line',
       source: ARC_SOURCE_ID,
       paint: {
-        'line-color': ['get', 'color'],
-        'line-width': 1.5,
+        'line-color':   ['get', 'color'],
+        'line-width':   1.5,
         'line-opacity': ['get', 'opacity'],
-        'line-blur': 1,
+        'line-blur':    1,
       },
       layout: {
-        'line-cap': 'round',
+        'line-cap':  'round',
         'line-join': 'round',
       },
     })
 
-    // Animate arc draw via requestAnimationFrame
     const animate = (now) => {
       const elapsed = now - startTime
       let needsUpdate = false
 
-      pairs.forEach((pair, i) => {
-        const key = `${pair.source}-${i}`
+      visibleArcs.forEach((_, i) => {
         const arcElapsed = elapsed - i * ARC_STAGGER
         if (arcElapsed <= 0) return
-
-        const prev = arcProgressRef.current[key]
+        const prev = arcProgressRef.current[i]
         const next = Math.min(1, arcElapsed / ARC_DRAW_DURATION)
         if (next !== prev) {
-          arcProgressRef.current[key] = next
+          arcProgressRef.current[i] = next
           needsUpdate = true
         }
       })
@@ -144,14 +111,8 @@ const ArcLayer = ({ trendData, activeSources, dataSourceArcs, activeQuery }) => 
         if (src) src.setData(buildGeoJSON(arcProgressRef.current))
       }
 
-      const allDone = pairs.every((_, i) => {
-        const key = `${pairs[i].source}-${i}`
-        return (arcProgressRef.current[key] ?? 0) >= 1
-      })
-
-      if (!allDone) {
-        animFrameRef.current = requestAnimationFrame(animate)
-      }
+      const allDone = visibleArcs.every((_, i) => (arcProgressRef.current[i] ?? 0) >= 1)
+      if (!allDone) animFrameRef.current = requestAnimationFrame(animate)
     }
 
     animFrameRef.current = requestAnimationFrame(animate)
@@ -165,7 +126,7 @@ const ArcLayer = ({ trendData, activeSources, dataSourceArcs, activeQuery }) => 
         logger.error('ArcLayer cleanup error', e)
       }
     }
-  }, [mapInstance, trendData, activeSources, dataSourceArcs]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapInstance, arcData, activeSources, dataSourceArcs]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // React to activeQuery change — update opacity without full redraw
   useEffect(() => {

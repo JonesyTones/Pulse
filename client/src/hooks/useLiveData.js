@@ -9,6 +9,7 @@ const useLiveData = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const setTrendData = useAppStore((s) => s.setTrendData)
+  const setArcData = useAppStore((s) => s.setArcData)
   const setLastUpdated = useAppStore((s) => s.setLastUpdated)
   const trendData = useAppStore((s) => s.trendData)
   const lastUpdated = useAppStore((s) => s.lastUpdated)
@@ -22,7 +23,9 @@ const useLiveData = () => {
       // Support both { data, lastUpdated } envelope and bare array
       const data = Array.isArray(json) ? json : json.data ?? []
       const ts = Array.isArray(json) ? new Date().toISOString() : (json.lastUpdated ?? new Date().toISOString())
+      const arcs = Array.isArray(json) ? [] : (json.arcs ?? [])
       setTrendData(data)
+      setArcData(arcs)
       setLastUpdated(ts)
       setError(null)
     } catch (err) {

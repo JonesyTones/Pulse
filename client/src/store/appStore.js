@@ -3,17 +3,22 @@ import { create } from 'zustand'
 const useAppStore = create((set) => ({
   // Data
   trendData: [],
+  arcData: [],                  // pre-computed arc segments from server (updated each poll)
   lastUpdated: null,
   activeRegion: null,
   trendSnapshots: [],           // [{ timestamp: ISO8601, data: [...] }] max 288
 
-  // Source controls
-  activeSources: ['google', 'youtube', 'reddit', 'gdelt', 'twitter', 'tiktok', 'instagram'],
+  // Source controls — NEWS & SEARCH on by default, SOCIAL off by default
+  activeSources: ['google', 'youtube', 'bbc', 'euronews', 'guardian', 'nypost', 'aljazeera'],
   dataSourceArcs: {
     google:    true,
     youtube:   true,
+    bbc:       true,
+    euronews:  true,
+    guardian:  true,
+    nypost:    false,
+    aljazeera: false,
     reddit:    false,
-    gdelt:     false,
     twitter:   false,
     tiktok:    false,
     instagram: false,
@@ -62,6 +67,7 @@ const useAppStore = create((set) => ({
 
   // Setters — Data
   setTrendData: (data) => set({ trendData: data }),
+  setArcData: (arcs) => set({ arcData: arcs }),
   setLastUpdated: (ts) => set({ lastUpdated: ts }),
   setActiveRegion: (region) => set({ activeRegion: region }),
   setTrendSnapshots: (snapshots) => set({ trendSnapshots: snapshots }),
