@@ -5,6 +5,8 @@ import {
 } from 'react-icons/fa'
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6'
 import useAppStore from '../../store/appStore.js'
+import { rankForSummary } from '../../utils/summaryEngine.js'
+import { scoreRelevance } from '../../utils/relevanceEngine.js'
 import CollapsibleSection from './CollapsibleSection.jsx'
 import PinDetailView from './PinDetailView.jsx'
 import SavedArticles from './SavedArticles.jsx'
@@ -100,19 +102,34 @@ const AIPanel = () => {
   const aiResponse       = useAppStore((s) => s.aiResponse)
   const trendData        = useAppStore((s) => s.trendData)
   const activeSources    = useAppStore((s) => s.activeSources)
+  const activeTags       = useAppStore((s) => s.activeTags)
   const isPinDetailOpen  = useAppStore((s) => s.isPinDetailOpen)
 
   if (!isAIPanelOpen) return null
 
-  const topTrends = [...trendData]
-    .filter((d) => activeSources.includes(d.source))
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 5)
+  // Mirror MapContainer's tag-to-query derivation — same signal that drives pin dimming
+  const activeActiveTags  = activeTags.filter((t) => t.active !== false)
+  const relevanceQuery    = activeActiveTags.filter((t) => t.type === 'topic').map((t) => t.label).join(' ')
+  const activeRegionTags  = activeActiveTags.filter((t) => t.type === 'region').map((t) => t.label)
+  const hasActiveFilter   = relevanceQuery.trim().length > 0 || activeRegionTags.length > 0
 
-  const liveFeed = [...trendData]
-    .filter((d) => activeSources.includes(d.source))
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-    .slice(0, 10)
+  const filteredBySource  = trendData.filter((d) => activeSources.includes(d.source))
+
+  const topTrends = hasActiveFilter
+    ? scoreRelevance(filteredBySource, { query: relevanceQuery, activeRegionTags })
+        .filter((item) => item.relevanceScore >= 0.25)
+        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .slice(0, 10)
+    : rankForSummary(filteredBySource, 10)
+
+  const liveFeedBase = filteredBySource.filter((d) => d.lat != null && d.lng != null)
+
+  const liveFeed = hasActiveFilter
+    ? scoreRelevance(liveFeedBase, { query: relevanceQuery, activeRegionTags })
+        .filter((item) => item.relevanceScore >= 0.25)
+        .sort((a, b) => b.relevanceScore - a.relevanceScore || new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 25)
+    : rankForSummary(liveFeedBase, 25)
 
   return (
     <motion.div
@@ -188,7 +205,16 @@ const AIPanel = () => {
             ) : topTrends.map((item) => {
               const color = SOURCE_COLORS[item.source] || '#3B82F6'
               return (
-                <div key={item.id} style={{ padding: '8px 16px 10px' }}>
+                <motion.div
+                  key={item.id}
+                  whileHover={{ background: 'var(--pulse-surface-raised)' }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => {
+                    useAppStore.getState().setActivePinDetail(item)
+                    useAppStore.getState().setIsPinDetailOpen(true)
+                  }}
+                  style={{ padding: '8px 16px 10px', cursor: 'pointer' }}
+                >
                   {/* Topic + timestamp row */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
@@ -220,7 +246,7 @@ const AIPanel = () => {
                   <div style={{ height: 3, borderRadius: 1, background: `${color}33` }}>
                     <div style={{ height: '100%', width: `${item.volume}%`, background: color, borderRadius: 1 }} />
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
@@ -337,7 +363,7 @@ const AIPanel = () => {
 
         {/* 4 — Live Feed */}
         <CollapsibleSection title="LIVE FEED" defaultOpen={false}>
-          <div>
+          <div style={{ maxHeight: 400, overflowY: 'auto' }}>
             {liveFeed.length === 0 ? (
               <div style={{ padding: '12px 16px', fontFamily: "'Space Mono', monospace", fontSize: 10, color: 'var(--pulse-text-dim)' }}>
                 LOADING FEED...

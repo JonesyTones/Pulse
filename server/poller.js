@@ -50,7 +50,7 @@ const pollAll = async () => {
     const { key } = SOURCES[i]
     if (result.status === 'fulfilled' && result.value.length > 0) {
       cache.set(key, result.value)
-      console.log(`[poller] ${key}: ${result.value.length} items cached`)
+      console.info(`[poller] ${key}: ${result.value.length} items cached`)
     } else {
       const reason = result.status === 'rejected' ? result.reason?.message : 'empty result'
       console.warn(`[poller] ${key}: failed — ${reason}`)
@@ -68,7 +68,7 @@ const pollAll = async () => {
   const chains = buildArcChains(allItems)
   const arcs = chainsToArcs(chains, itemsById, SOURCE_COLORS)
   cache.set('arcs', arcs)
-  console.log(`[poller] arcs: ${arcs.length} segments from ${chains.length} chains`)
+  console.info(`[poller] arcs: ${arcs.length} segments from ${chains.length} chains`)
 }
 
 export const startPoller = () => {
