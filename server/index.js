@@ -8,7 +8,6 @@ import cache from './cache.js'
 import trendsRouter from './routes/trends.js'
 import youtubeRouter from './routes/youtube.js'
 import redditRouter from './routes/reddit.js'
-import gdeltRouter from './routes/gdelt.js'
 import twitterRouter from './routes/twitter.js'
 import tiktokRouter from './routes/tiktok.js'
 import instagramRouter from './routes/instagram.js'
@@ -24,13 +23,28 @@ app.use('/api', generalLimiter)
 app.use('/api/trends',   trendsRouter)
 app.use('/api/youtube',  youtubeRouter)
 app.use('/api/reddit',   redditRouter)
-app.use('/api/gdelt',    gdeltRouter)
 app.use('/api/twitter',  twitterRouter)
 app.use('/api/tiktok',   tiktokRouter)
 app.use('/api/instagram', instagramRouter)
 app.use('/api/ai',       aiRouter)
 
-const SOURCE_KEYS = ['google', 'youtube', 'reddit', 'gdelt', 'twitter', 'tiktok', 'instagram']
+// Individual news source routes (shared factory — cache read only)
+const NEWS_KEYS = ['bbc', 'euronews', 'guardian', 'nypost', 'aljazeera']
+function makeNewsRoute(sourceKey) {
+  return (req, res) => {
+    const entry = cache.get(sourceKey)
+    res.json(entry ? entry.data : [])
+  }
+}
+for (const key of NEWS_KEYS) {
+  app.get(`/api/${key}`, makeNewsRoute(key))
+}
+
+const SOURCE_KEYS = [
+  'google', 'youtube',
+  'bbc', 'euronews', 'guardian', 'nypost', 'aljazeera',
+  'reddit', 'twitter', 'tiktok', 'instagram',
+]
 
 app.get('/api/health', (req, res) => {
   const sources = Object.fromEntries(

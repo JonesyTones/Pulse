@@ -10,8 +10,12 @@ import CollapsibleSection from './CollapsibleSection.jsx'
 const SOURCE_COLORS = {
   google:    '#3B82F6',
   youtube:   '#EF4444',
+  bbc:       '#1D4ED8',
+  euronews:  '#F59E0B',
+  guardian:  '#059669',
+  nypost:    '#DC2626',
+  aljazeera: '#D97706',
   reddit:    '#F97316',
-  gdelt:     '#F59E0B',
   twitter:   '#06B6D4',
   tiktok:    '#EC4899',
   instagram: '#A855F7',
@@ -20,8 +24,12 @@ const SOURCE_COLORS = {
 const SOURCE_ICONS = {
   google:    FaGoogle,
   youtube:   FaYoutube,
+  bbc:       FaNewspaper,
+  euronews:  FaNewspaper,
+  guardian:  FaNewspaper,
+  nypost:    FaNewspaper,
+  aljazeera: FaNewspaper,
   reddit:    FaReddit,
-  gdelt:     FaNewspaper,
   twitter:   FaXTwitter,
   tiktok:    FaTiktok,
   instagram: FaInstagram,
@@ -30,14 +38,18 @@ const SOURCE_ICONS = {
 const SOURCE_LABELS = {
   google:    'GOOGLE TRENDS',
   youtube:   'YOUTUBE',
+  bbc:       'BBC WORLD',
+  euronews:  'EURONEWS',
+  guardian:  'THE GUARDIAN',
+  nypost:    'NY POST',
+  aljazeera: 'AL JAZEERA',
   reddit:    'REDDIT',
-  gdelt:     'GDELT',
   twitter:   'X / TWITTER',
   tiktok:    'TIKTOK',
   instagram: 'INSTAGRAM',
 }
 
-const MOCK_SOURCES = new Set(['reddit', 'gdelt', 'twitter', 'tiktok', 'instagram'])
+const MOCK_SOURCES = new Set(['reddit', 'twitter', 'tiktok', 'instagram'])
 
 const getRelativeTime = (iso) => {
   const diffMs  = Date.now() - new Date(iso).getTime()

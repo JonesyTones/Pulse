@@ -19,15 +19,24 @@ const TOPICS = [
   'ENVIRONMENT', 'RELIGION', 'MILITARY', 'CYBERSECURITY',
 ]
 
-const SOURCES = [
-  { key: 'google',    label: 'GOOGLE TRENDS', color: '#3B82F6', icon: FaGoogle,    mock: false },
-  { key: 'youtube',   label: 'YOUTUBE',        color: '#EF4444', icon: FaYoutube,   mock: false },
-  { key: 'reddit',    label: 'REDDIT',         color: '#F97316', icon: FaReddit,    mock: true  },
-  { key: 'gdelt',     label: 'GDELT',          color: '#F59E0B', icon: FaNewspaper, mock: true  },
-  { key: 'twitter',   label: 'X / TWITTER',   color: '#06B6D4', icon: FaXTwitter,  mock: true  },
-  { key: 'tiktok',    label: 'TIKTOK',         color: '#EC4899', icon: FaTiktok,    mock: true  },
-  { key: 'instagram', label: 'INSTAGRAM',      color: '#A855F7', icon: FaInstagram, mock: true  },
+const NEWS_SOURCES = [
+  { key: 'google',    label: 'GOOGLE TRENDS', color: '#3B82F6', icon: FaGoogle,    mock: false, defaultOn: true  },
+  { key: 'youtube',   label: 'YOUTUBE',        color: '#EF4444', icon: FaYoutube,   mock: false, defaultOn: true  },
+  { key: 'bbc',       label: 'BBC WORLD',      color: '#1D4ED8', icon: FaNewspaper, mock: false, defaultOn: true  },
+  { key: 'euronews',  label: 'EURONEWS',       color: '#F59E0B', icon: FaNewspaper, mock: false, defaultOn: true  },
+  { key: 'guardian',  label: 'THE GUARDIAN',   color: '#059669', icon: FaNewspaper, mock: false, defaultOn: true  },
+  { key: 'nypost',    label: 'NY POST',         color: '#DC2626', icon: FaNewspaper, mock: false, defaultOn: true  },
+  { key: 'aljazeera', label: 'AL JAZEERA',     color: '#D97706', icon: FaNewspaper, mock: false, defaultOn: true  },
 ]
+
+const SOCIAL_SOURCES = [
+  { key: 'reddit',    label: 'REDDIT',       color: '#F97316', icon: FaReddit,    mock: true, defaultOn: false },
+  { key: 'twitter',   label: 'X / TWITTER', color: '#06B6D4', icon: FaXTwitter,  mock: true, defaultOn: false },
+  { key: 'tiktok',    label: 'TIKTOK',       color: '#EC4899', icon: FaTiktok,    mock: true, defaultOn: false },
+  { key: 'instagram', label: 'INSTAGRAM',    color: '#A855F7', icon: FaInstagram, mock: true, defaultOn: false },
+]
+
+const SOURCES = [...NEWS_SOURCES, ...SOCIAL_SOURCES]
 
 const MAX_REGIONS = 3
 const MAX_TOPICS  = 5
@@ -256,8 +265,9 @@ const StepWelcome = ({ onNext }) => (
           maxWidth: 380,
         }}
       >
-        PULSE monitors real-time signals across Google Trends, YouTube, Reddit, X, TikTok,
-        Instagram, and global news to surface what matters, where it matters.
+        PULSE monitors real-time signals across Google Trends, YouTube, and live news feeds
+        from BBC, Euronews, The Guardian, NY Post, and Al Jazeera — plus social signals from
+        Reddit, X, TikTok, and Instagram — to surface what matters, where it matters.
       </p>
 
       <ContinueButton onClick={onNext} label="INITIALIZE" />
@@ -582,6 +592,97 @@ const StepTopics = ({ onNext, onBack, selectedTopics, setSelectedTopics }) => {
 
 // ─── Step 4: Select Sources ───────────────────────────────────────────────────
 
+const SourceToggleRow = ({ source, localSources, setLocalSources }) => {
+  const Icon    = source.icon
+  const enabled = localSources[source.key] ?? source.defaultOn
+  return (
+    <motion.div
+      whileHover={{ background: 'var(--pulse-surface-raised)' }}
+      transition={{ duration: 0.2 }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '12px 24px',
+        borderBottom: '1px solid var(--pulse-border)',
+      }}
+    >
+      <span
+        style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: source.color, flexShrink: 0,
+        }}
+      />
+      <Icon size={14} color={source.color} style={{ flexShrink: 0 }} />
+      <span
+        style={{
+          fontFamily: "'Space Mono', monospace",
+          fontSize: 11,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--pulse-text-primary)',
+          flex: 1,
+        }}
+      >
+        {source.label}
+      </span>
+      {source.mock && (
+        <span
+          aria-label="Simulated data"
+          style={{
+            border: '1px solid var(--pulse-text-dim)',
+            color: 'var(--pulse-text-dim)',
+            fontFamily: "'Space Mono', monospace",
+            fontSize: 9,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            padding: '1px 4px',
+            flexShrink: 0,
+          }}
+        >
+          MOCK
+        </span>
+      )}
+      <Switch.Root
+        checked={enabled}
+        onCheckedChange={({ checked }) =>
+          setLocalSources((prev) => ({ ...prev, [source.key]: checked }))
+        }
+        size="sm"
+        colorPalette="blue"
+        aria-label={`Toggle ${source.label}`}
+      >
+        <Switch.HiddenInput />
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
+      </Switch.Root>
+    </motion.div>
+  )
+}
+
+const SourceGroupLabel = ({ children }) => (
+  <div
+    style={{
+      padding: '7px 24px 5px',
+      borderBottom: '1px solid var(--pulse-border)',
+      background: 'var(--pulse-surface)',
+    }}
+  >
+    <span
+      style={{
+        fontFamily: "'Space Mono', monospace",
+        fontSize: 9,
+        letterSpacing: '0.16em',
+        textTransform: 'uppercase',
+        color: 'var(--pulse-text-dim)',
+      }}
+    >
+      {children}
+    </span>
+  </div>
+)
+
 const StepSources = ({ onNext, onBack, localSources, setLocalSources }) => (
   <div style={{ display: 'flex', minHeight: 520 }}>
     <LeftPanel
@@ -590,103 +691,45 @@ const StepSources = ({ onNext, onBack, localSources, setLocalSources }) => (
       title="SELECT YOUR SOURCES"
       body={
         <>
-          Choose which data sources to include in your intelligence feed. All sources are
-          enabled by default.
+          PULSE pulls from two types of sources.
           <br /><br />
-          Different sources capture different signals — Google Trends shows search behavior,
-          YouTube captures video momentum, and social sources show real-time conversation.
-          Keeping all sources active gives you the fullest picture.
+          <strong>News &amp; Search</strong> sources — Google Trends, YouTube, and live RSS
+          feeds from BBC, Euronews, The Guardian, NY Post, and Al Jazeera — are enabled by
+          default and provide real or near-real-time signal.
           <br /><br />
-          You can toggle sources on and off at any time using the Data Sources panel on the
-          left side of the map.
+          <strong>Social</strong> sources — Reddit, X/Twitter, TikTok, and Instagram — are
+          simulated for demonstration purposes and are off by default. Enable them to layer in
+          social conversation signals alongside news coverage.
+          <br /><br />
+          All sources can be toggled at any time from the Data Sources panel.
         </>
       }
-      note="NOTE: MOCK sources are simulated for demonstration purposes"
+      note="NOTE: SOCIAL sources are simulated (MOCK) — not connected to live APIs"
     />
 
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <div style={{ flex: 1 }}>
-        {SOURCES.map((source) => {
-          const Icon    = source.icon
-          const enabled = localSources[source.key] ?? true
-          return (
-            <motion.div
-              key={source.key}
-              whileHover={{ background: 'var(--pulse-surface-raised)' }}
-              transition={{ duration: 0.2 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '14px 24px',
-                borderBottom: '1px solid var(--pulse-border)',
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: source.color,
-                  flexShrink: 0,
-                }}
-              />
-              <Icon size={14} color={source.color} style={{ flexShrink: 0 }} />
-              <span
-                style={{
-                  fontFamily: "'Space Mono', monospace",
-                  fontSize: 12,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--pulse-text-primary)',
-                  flex: 1,
-                }}
-              >
-                {source.label}
-              </span>
-              {source.mock && (
-                <span
-                  aria-label="Simulated data"
-                  style={{
-                    border: '1px solid var(--pulse-text-dim)',
-                    color: 'var(--pulse-text-dim)',
-                    fontFamily: "'Space Mono', monospace",
-                    fontSize: 9,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    padding: '1px 4px',
-                    flexShrink: 0,
-                  }}
-                >
-                  MOCK
-                </span>
-              )}
-              <Switch.Root
-                checked={enabled}
-                onCheckedChange={({ checked }) =>
-                  setLocalSources((prev) => ({ ...prev, [source.key]: checked }))
-                }
-                size="sm"
-                colorPalette="blue"
-                aria-label={`Toggle ${source.label}`}
-              >
-                <Switch.HiddenInput />
-                <Switch.Control>
-                  <Switch.Thumb />
-                </Switch.Control>
-              </Switch.Root>
-            </motion.div>
-          )
-        })}
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <SourceGroupLabel>NEWS &amp; SEARCH</SourceGroupLabel>
+        {NEWS_SOURCES.map((source) => (
+          <SourceToggleRow
+            key={source.key}
+            source={source}
+            localSources={localSources}
+            setLocalSources={setLocalSources}
+          />
+        ))}
+        <SourceGroupLabel>SOCIAL — OFF BY DEFAULT</SourceGroupLabel>
+        {SOCIAL_SOURCES.map((source) => (
+          <SourceToggleRow
+            key={source.key}
+            source={source}
+            localSources={localSources}
+            setLocalSources={setLocalSources}
+          />
+        ))}
       </div>
 
-      <div style={{ padding: '16px 24px' }}>
+      <div style={{ padding: '16px 24px', flexShrink: 0 }}>
         <ContinueButton onClick={onNext} />
       </div>
     </div>
@@ -779,7 +822,7 @@ const Onboarding = ({ onComplete }) => {
   const [selectedRegions,  setSelectedRegions]  = useState([])
   const [selectedTopics,   setSelectedTopics]   = useState([])
   const [localSources,     setLocalSources]     = useState(
-    Object.fromEntries(SOURCES.map((s) => [s.key, true])),
+    Object.fromEntries(SOURCES.map((s) => [s.key, s.defaultOn])),
   )
 
   const setActiveTags    = useAppStore((s) => s.setActiveTags)

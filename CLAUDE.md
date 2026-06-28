@@ -216,7 +216,6 @@ pulse/
 │   │   ├── trends.js
 │   │   ├── youtube.js
 │   │   ├── reddit.js
-│   │   ├── gdelt.js
 │   │   ├── twitter.js
 │   │   ├── tiktok.js
 │   │   ├── instagram.js
@@ -224,11 +223,16 @@ pulse/
 │   ├── services/
 │   │   ├── googleTrends.js
 │   │   ├── youtubeService.js
+│   │   ├── rssService.js           # RSS factory (BBC, Euronews, Guardian, NY Post, Al Jazeera)
+│   │   ├── geoTagger.js            # NER → gazetteer geo-resolution
+│   │   ├── arcEngine.js
+│   │   ├── similarity.js
 │   │   ├── redditService.js
-│   │   ├── gdeltService.js
 │   │   ├── twitterService.js
 │   │   ├── tiktokService.js
 │   │   └── instagramService.js
+│   ├── data/
+│   │   └── gazetteer.json
 │   ├── middleware/
 │   │   ├── cors.js
 │   │   ├── rateLimiter.js
@@ -546,10 +550,11 @@ Tag strip below SearchControl. Only visible when activeTags.length > 0.
   trendSnapshots: [],           // [{ timestamp: ISO8601, data: [...] }] max 288
 
   // Source controls
-  activeSources: ['google', 'youtube', 'reddit', 'gdelt', 'twitter', 'tiktok', 'instagram'],
+  activeSources: ['google', 'youtube', 'bbc', 'euronews', 'guardian', 'nypost', 'aljazeera'],
   dataSourceArcs: {
-    google: true, youtube: true, reddit: false, gdelt: false,
-    twitter: false, tiktok: false, instagram: false,
+    google: true, youtube: true, bbc: true, euronews: true, guardian: true,
+    nypost: false, aljazeera: false,
+    reddit: false, twitter: false, tiktok: false, instagram: false,
   },
   dataDensity: 50,
 
@@ -612,7 +617,7 @@ VITE_MAPBOX_TOKEN=pk.your_mapbox_token_here
 ```javascript
 {
   id: "unique-string",
-  source: "google"|"youtube"|"reddit"|"gdelt"|"twitter"|"tiktok"|"instagram",
+  source: "google"|"youtube"|"bbc"|"euronews"|"guardian"|"nypost"|"aljazeera"|"reddit"|"twitter"|"tiktok"|"instagram",
   topic: "string",
   lat: number,
   lng: number,

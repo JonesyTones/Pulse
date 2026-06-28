@@ -7,25 +7,54 @@ import {
 import { FaXTwitter, FaTiktok } from 'react-icons/fa6'
 import useAppStore from '../../store/appStore.js'
 
-const SOURCES = [
+const NEWS_SOURCES = [
   { key: 'google',    label: 'GOOGLE TRENDS', color: '#3B82F6', icon: FaGoogle,    mock: false },
   { key: 'youtube',   label: 'YOUTUBE',        color: '#EF4444', icon: FaYoutube,   mock: false },
-  { key: 'reddit',    label: 'REDDIT',         color: '#F97316', icon: FaReddit,    mock: true  },
-  { key: 'gdelt',     label: 'GDELT',          color: '#F59E0B', icon: FaNewspaper, mock: true  },
-  { key: 'twitter',   label: 'X / TWITTER',   color: '#06B6D4', icon: FaXTwitter,  mock: true  },
-  { key: 'tiktok',    label: 'TIKTOK',         color: '#EC4899', icon: FaTiktok,    mock: true  },
-  { key: 'instagram', label: 'INSTAGRAM',      color: '#A855F7', icon: FaInstagram, mock: true  },
+  { key: 'bbc',       label: 'BBC WORLD',      color: '#1D4ED8', icon: FaNewspaper, mock: false },
+  { key: 'euronews',  label: 'EURONEWS',       color: '#F59E0B', icon: FaNewspaper, mock: false },
+  { key: 'guardian',  label: 'THE GUARDIAN',   color: '#059669', icon: FaNewspaper, mock: false },
+  { key: 'nypost',    label: 'NY POST',         color: '#DC2626', icon: FaNewspaper, mock: false },
+  { key: 'aljazeera', label: 'AL JAZEERA',     color: '#D97706', icon: FaNewspaper, mock: false },
 ]
 
+const SOCIAL_SOURCES = [
+  { key: 'reddit',    label: 'REDDIT',       color: '#F97316', icon: FaReddit,    mock: true },
+  { key: 'twitter',   label: 'X / TWITTER', color: '#06B6D4', icon: FaXTwitter,  mock: true },
+  { key: 'tiktok',    label: 'TIKTOK',       color: '#EC4899', icon: FaTiktok,    mock: true },
+  { key: 'instagram', label: 'INSTAGRAM',    color: '#A855F7', icon: FaInstagram, mock: true },
+]
+
+const GroupLabel = ({ children }) => (
+  <div
+    style={{
+      padding: '8px 16px 6px',
+      borderBottom: '1px solid var(--pulse-border)',
+      background: 'var(--pulse-surface)',
+    }}
+  >
+    <span
+      style={{
+        fontFamily: "'Space Mono', monospace",
+        fontSize: 9,
+        letterSpacing: '0.16em',
+        textTransform: 'uppercase',
+        color: 'var(--pulse-text-dim)',
+      }}
+    >
+      {children}
+    </span>
+  </div>
+)
+
 const SourceRow = ({ source }) => {
-  const activeSources   = useAppStore((s) => s.activeSources)
-  const dataSourceArcs  = useAppStore((s) => s.dataSourceArcs)
+  const activeSources    = useAppStore((s) => s.activeSources)
+  const dataSourceArcs   = useAppStore((s) => s.dataSourceArcs)
   const setActiveSources = useAppStore((s) => s.setActiveSources)
   const setDataSourceArcs = useAppStore((s) => s.setDataSourceArcs)
 
-  const isOn     = activeSources.includes(source.key)
-  const arcsOn   = dataSourceArcs[source.key] ?? false
-  const Icon     = source.icon
+  const isOn   = activeSources.includes(source.key)
+  const arcsOn = dataSourceArcs[source.key] ?? false
+  const Icon   = source.icon
 
   const toggleSource = () => {
     setActiveSources(
@@ -50,7 +79,6 @@ const SourceRow = ({ source }) => {
     >
       {/* Main row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Color dot */}
         <span
           style={{
             width: 8, height: 8, borderRadius: '50%',
@@ -58,10 +86,8 @@ const SourceRow = ({ source }) => {
           }}
         />
 
-        {/* Brand icon */}
         <Icon size={14} color={source.color} style={{ flexShrink: 0 }} />
 
-        {/* Source name */}
         <span
           style={{
             fontFamily: "'Space Mono', monospace",
@@ -75,7 +101,6 @@ const SourceRow = ({ source }) => {
           {source.label}
         </span>
 
-        {/* MOCK badge */}
         {source.mock && (
           <span
             aria-label="Simulated data"
@@ -95,7 +120,6 @@ const SourceRow = ({ source }) => {
           </span>
         )}
 
-        {/* Main toggle */}
         <Switch.Root
           checked={isOn}
           onCheckedChange={toggleSource}
@@ -147,7 +171,6 @@ const DataSourcesPanel = ({ onClose }) => {
   const setDataDensity = useAppStore((s) => s.setDataDensity)
 
   return (
-    // FloatingControls wrapper handles positioning and slide animation
     <div
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
@@ -197,8 +220,13 @@ const DataSourcesPanel = ({ onClose }) => {
         </button>
       </div>
 
-      {/* Source rows */}
-      {SOURCES.map((src) => <SourceRow key={src.key} source={src} />)}
+      {/* NEWS & SEARCH group */}
+      <GroupLabel>NEWS &amp; SEARCH</GroupLabel>
+      {NEWS_SOURCES.map((src) => <SourceRow key={src.key} source={src} />)}
+
+      {/* SOCIAL group */}
+      <GroupLabel>SOCIAL — OFF BY DEFAULT</GroupLabel>
+      {SOCIAL_SOURCES.map((src) => <SourceRow key={src.key} source={src} />)}
 
       {/* Data Density */}
       <div style={{ padding: '16px' }}>
