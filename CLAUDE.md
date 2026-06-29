@@ -998,7 +998,9 @@ Never use origin: '*' in production.
 2. **Chakra UI v3 for components, Tailwind for layout.**
 3. **Framer Motion for all animations.** No raw CSS transitions on interactive elements.
 4. **No inline styles.** Tailwind classes or Chakra style props only.
-5. **No console.log in committed code.** Use utils/logger.js.
+5. **No console.log in committed code.**
+   - Client-side: use `utils/logger.js` (wraps console.log behind a dev-only guard; uses Vite's `import.meta.env` — client only).
+   - Server-side: use `console.info` / `console.warn` / `console.error` as appropriate. A `server/logger.js` does not exist yet and is a future task.
 6. **All API calls go through the backend.** No direct external calls from browser.
 7. **Handle loading and error states** for every async operation.
 8. **Comment non-obvious logic.** D3 arc math, CustomLayerInterface, zoom-granularity,
